@@ -1,2 +1,3 @@
-# strava_parser
-Modules to parse Strava GPX data and further evaluate by time, distance, and elevation.
+# stravaParser
+
+Package to support further analysis of Strava GPX files, including by distance, time, and elevation.
