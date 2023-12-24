@@ -23,7 +23,7 @@ class StravaParser:
         with open(self.file, "r") as self.run_file:
             self.run_parsed = gpxpy.parse(self.run_file)
 
-        # Praser derives the points in the activity.
+        # Parser derives the points in the activity.
         self.distance = []
         self.run_points = self.run_parsed.tracks[0].segments[0].points
         self.lats = [self.run_points[i].latitude for i in range(len(self.run_points))]
