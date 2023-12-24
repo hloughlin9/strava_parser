@@ -2,6 +2,7 @@ import gpxpy
 import pandas as pd
 import numpy as np
 from geopy.distance import geodesic
+from datetime import datetime as dt
 
 class StravaParser:
 
@@ -68,3 +69,15 @@ class StravaParser:
         df_ = df_.groupby("quarterMile").agg({"constant":"sum"})
         self.df_ = df_
         return self.df_
+
+
+    def get_user_timezone(self):
+
+        utc_now = dt.utcnow()
+        user_now = dt.now()
+
+        if utc_now >= 5:
+            print(f"UTC now: {utc_now}")
+
+        else:
+            print(f"USER now: {user_now}")
