@@ -73,6 +73,8 @@ class StravaParser:
 
     def get_user_timezone(self):
 
+        ##### EXPERIMENTAL FEATURE IN DEV #####
+
         utc_now = dt.utcnow().hour
         user_now = dt.now().hour
 
