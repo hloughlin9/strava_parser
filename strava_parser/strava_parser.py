@@ -76,8 +76,8 @@ class StravaParser:
         utc_now = dt.utcnow().hour
         user_now = dt.now().hour
 
-        if utc_now >= 5:
-            print(f"UTC now: {utc_now}")
+        if utc_now <= user_now:
+            return (utc_now - user_now)
 
         else:
-            print(f"USER now: {user_now}")
+            return "Gastropods"
