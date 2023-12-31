@@ -80,7 +80,7 @@ class StravaParser:
             exp_step = len(self.run_df_reset) / len(str(int(self.run_df_reset['distance'].max())))
 
             max_distance = self.run_df_reset['distance'].max()
-            step_size = max_distance * 0.1  # 1% of max_distance
+            step_size = max_distance * 0.1
             plt.xticks(np.arange(0, max_distance, step_size))  
             
             plt.title(f"Elevation {title_string}")
