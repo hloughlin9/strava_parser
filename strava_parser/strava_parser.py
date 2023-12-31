@@ -80,7 +80,7 @@ class StravaParser:
             exp_step = len(self.run_df_reset) / len(str(int(self.run_df_reset['distance'].max())))
 
             max_distance = self.run_df_reset['distance'].max()
-            step_size = max_distance * 0.1
+            step_size = max_distance * 0.1  # 1% of max_distance
             plt.xticks(np.arange(0, max_distance, step_size))  
             
             plt.title(f"Elevation {title_string}")
@@ -94,6 +94,7 @@ class StravaParser:
             map1 = folium.Map(location=(init_lat, init_long), zoom_start=15)
             folium.PolyLine(map_points).add_to(map1)
             return map1
+        
         
         else:
             raise ValueError("Must choose 'elevation' or 'route'.")
