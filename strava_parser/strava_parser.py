@@ -28,36 +28,30 @@ class StravaParser:
         self.file = gpx_file
         self.utc_offset = utc_offset
 
-        with open(self.file, "r") as self.run_file:
-            self.run_parsed = gpxpy.parse(self.run_file)
+        with open(self.file, "r") as run_file:
+            self.run_parsed = gpxpy.parse(run_file)
 
         self.run_points = self.run_parsed.tracks[0].segments[0].points
 
-        # If the user declares an offset relative to UTC, that will be used.
-
         if self.utc_offset is not None:
             timedelta = td(hours=self.utc_offset)
+            for point in self.run_points:
+                point.adjust_time(timedelta)
 
-            for i, _ in enumerate(self.run_points):
-                self.run_points[i].adjust_time(timedelta)
-
-        # Convert the attributes into lists and derive the distance from
-        # the previous lat/long pair if there is one.
-        self.lats = [getattr(self.run_points[i], 'latitude') for i, _ in enumerate(self.run_points)]
-        self.longs = [getattr(self.run_points[i], 'longitude') for i, _ in enumerate(self.run_points)]
-        self.elevations = [getattr(self.run_points[i], 'elevation') for i, _ in enumerate(self.run_points)]
-        self.times = [getattr(self.run_points[i], 'time') for i, _ in enumerate(self.run_points)]
-        self.coords_pairs = [(self.lats[i], self.longs[i]) for i in range(len(self.run_points))]
+        self.lats = [point.latitude for point in self.run_points]
+        self.longs = [point.longitude for point in self.run_points]
+        self.elevations = [point.elevation for point in self.run_points]
+        self.times = [point.time for point in self.run_points]
+        self.coords_pairs = list(zip(self.lats, self.longs))
         self.run_df = pd.DataFrame([self.lats, self.longs, self.elevations, self.times]).transpose()
-        self.run_df.columns = ['latitude','longitude','elevation','time']
-        self.run_df['distance_from_previous'] = [(0 if i < 1 else geodesic(self.coords_pairs[i-1],
-                    self.coords_pairs[i]).miles) for i in range(len(self.run_df))]
-        self.run_df['distance'] = [(i if miles == True else i * 0.621371192) for i in self.run_df['distance_from_previous']]
+        self.run_df.columns = ['latitude', 'longitude', 'elevation', 'time']
+        self.run_df['distance_from_previous'] = [0 if i < 1 else geodesic(self.coords_pairs[i-1], self.coords_pairs[i]).miles for i in range(len(self.run_df))]
+        self.run_df['distance'] = [i if miles else i * 0.621371192 for i in self.run_df['distance_from_previous']]
         self.run_df['distance'] = self.run_df['distance'].cumsum().round(2)
         self.run_df = self.run_df.drop(columns=['distance_from_previous'])
         self.run_df.index = self.run_df['distance'] // 1
         
-        
+
     def generate_plots(self, kind=None):
 
 
