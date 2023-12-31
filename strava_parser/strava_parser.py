@@ -8,7 +8,6 @@ from geopy.distance import geodesic
 
 class StravaParser:
 
-
     """
     A module to parse GPX files into a series of lat, long points
     and organized by time (H, M, S, and cumulative time), as well
@@ -54,7 +53,6 @@ class StravaParser:
 
     def generate_plots(self, kind=None):
 
-
         """
         Generate plots of the run data.
         ...
@@ -63,12 +61,10 @@ class StravaParser:
         kind: str (optional)
             Choose between 'elevation' and 'route'.
         """
-        
 
         self.run_df_reset = self.run_df.reset_index(drop=True)
         title_string = f" for Run @ {self.run_df_reset['time'][0].strftime('%Y-%m-%d %H:%M')}"
         
-
         if kind == "elevation":
             fig = plt.figure(figsize=(10,2))
             plt.plot(self.run_df_reset['distance'], self.run_df_reset['elevation'])
@@ -78,7 +74,6 @@ class StravaParser:
             
             plt.title(f"Elevation {title_string}")
             return plt.show()
-    
 
         elif kind == "route":
             init_lat, init_long = self.run_df_reset.iloc[0]['latitude'], self.run_df_reset.iloc[0]['longitude']
@@ -87,6 +82,5 @@ class StravaParser:
             folium.PolyLine(map_points).add_to(map1)
             return map1
         
-
         else:
             raise ValueError("Must choose 'elevation' or 'route'.")
