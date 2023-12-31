@@ -1,10 +1,13 @@
 import gpxpy
 import pandas as pd
 import numpy as np
-from geopy.distance import geodesic
+import folium
+import matplotlib.pyplot as plt
 from datetime import datetime as dt
+from geopy.distance import geodesic
 
 class StravaParser:
+
 
     """
     A module to parse GPX files into a series of lat, long points
@@ -15,71 +18,82 @@ class StravaParser:
     -----------
     gpx_file: str
         File path to the GPX file to be analyzed.
+    
+    utc_offset: int
+        Optional number of hours +/- (relative to UTC) of adjustment.
     """
         
-    def __init__(self, gpx_file):
+
+    def __init__(self, gpx_file, utc_offset=None, miles=True):
         self.file = gpx_file
+        self.utc_offset = utc_offset
 
         with open(self.file, "r") as self.run_file:
             self.run_parsed = gpxpy.parse(self.run_file)
 
-        # Parser derives the points in the activity.
-        self.distance = []
         self.run_points = self.run_parsed.tracks[0].segments[0].points
-        self.lats = [self.run_points[i].latitude for i in range(len(self.run_points))]
-        self.longs = [self.run_points[i].longitude for i in range(len(self.run_points))]
+
+        # If the user declares an offset relative to UTC, that will be used.
+
+        if self.utc_offset is not None:
+            timedelta = td(hours=self.utc_offset)
+
+            for i, _ in enumerate(self.run_points):
+                self.run_points[i].adjust_time(timedelta)
+
+        # Convert the attributes into lists and derive the distance from
+        # the previous lat/long pair if there is one.
+        self.lats = [getattr(self.run_points[i], 'latitude') for i, _ in enumerate(self.run_points)]
+        self.longs = [getattr(self.run_points[i], 'longitude') for i, _ in enumerate(self.run_points)]
+        self.elevations = [getattr(self.run_points[i], 'elevation') for i, _ in enumerate(self.run_points)]
+        self.times = [getattr(self.run_points[i], 'time') for i, _ in enumerate(self.run_points)]
         self.coords_pairs = [(self.lats[i], self.longs[i]) for i in range(len(self.run_points))]
-        self.els = [self.run_points[i].elevation for i in range(len(self.run_points))]
-        self.times = [str(self.run_points[i].time)[:-6] for i in range(len(self.run_points))]
-        self.hours = [(int(str(self.times[i])[-8:-6])-4) for i in range(len(self.run_points))]
-        self.minutes = [int(str(self.times[i])[-5:-3]) for i in range(len(self.run_points))]
-        self.seconds = [int(str(self.times[i])[-2:]) for i in range(len(self.run_points))]
-        self.cumulative_seconds = [(self.hours[i]*3600+self.minutes[i]*60+self.seconds[i]) for i in range(len(self.run_points))]
-        self.start_seconds = self.cumulative_seconds[0]
-        self.time_seconds = [(i-self.start_seconds) for i in self.cumulative_seconds]
+        self.run_df = pd.DataFrame([self.lats, self.longs, self.elevations, self.times]).transpose()
+        self.run_df.columns = ['latitude','longitude','elevation','time']
+        self.run_df['distance_from_previous'] = [(0 if i < 1 else geodesic(self.coords_pairs[i-1],
+                    self.coords_pairs[i]).miles) for i in range(len(self.run_df))]
+        self.run_df['distance'] = [(i if miles == True else i * 0.621371192) for i in self.run_df['distance_from_previous']]
+        self.run_df['distance'] = self.run_df['distance'].cumsum().round(2)
+        self.run_df = self.run_df.drop(columns=['distance_from_previous'])
+        self.run_df.index = self.run_df['distance'] // 1
         
-        # Get the distance between each pair of coordinates.
-        # If it's the first one, there is no pair of coordinates,
-        # so we use 0.
-        for i in range(len(self.coords_pairs)):
-            if i < 1:
-                self.distance.append(0)
+    def generate_plots(self, kind=None):
 
-            else:
-                self.distance.append(geodesic(self.coords_pairs[i-1],
-                    self.coords_pairs[i]).miles)
+        """
+        Generate plots of the run data.
+        ...
+        Attributes:
+        -----------
+        kind: str (optional)
+            Choose between 'elevation' and 'route'.
+        """
         
-        self.cumsum = np.cumsum(self.distance)
+        self.run_df_reset = self.run_df.reset_index(drop=True)
 
-        self.run_df = pd.DataFrame([self.cumsum, self.lats,
-                                    self.longs, self.els, self.times, self.hours,
-                                    self.minutes, self.seconds, self.cumulative_seconds, self.time_seconds]).transpose()
-        self.run_df.columns = ['dist. (mi)','lat','long','el. (m)', 'timestamp', 'H', 'M', 'S',
-                               'seconds (day)', 'seconds (workout)']
-        self.run_df['dist (.00)'] = self.run_df['dist. (mi)'].astype(float).round(2)
-        self.run_df['el. (ft.)'] = self.run_df['el. (m)'] * 3.284
+        title_string = f" for Run @ {self.run_df_reset['time'][0].strftime('%Y-%m-%d %H:%M')}"
+        
+        if kind == "elevation":
+            fig = plt.figure(figsize=(10,2))
+            plt.plot(self.run_df_reset['distance'], self.run_df_reset['elevation'])
+            
+            # Set xticks every 1% of max_distance
+            exp_step = len(self.run_df_reset) / len(str(int(self.run_df_reset['distance'].max())))
 
+            max_distance = self.run_df_reset['distance'].max()
+            step_size = max_distance * 0.1  # 1% of max_distance
+            plt.xticks(np.arange(0, max_distance, step_size))  
+            
+            plt.title(f"Elevation {title_string}")
+            return plt.show()
+    
 
-        self.run_df['quarterMile'] = (self.run_df['dist (.00)'] // 0.25).astype(int)
+        elif kind == "route":
 
-    def get_quarters(self):
-
-        df_ = self.run_df.copy()
-        df_['constant'] = 1
-        df_ = df_.groupby("quarterMile").agg({"constant":"sum"})
-        self.df_ = df_
-        return self.df_
-
-
-    def get_user_timezone(self):
-
-        ##### EXPERIMENTAL FEATURE IN DEV #####
-
-        utc_now = dt.utcnow().hour
-        user_now = dt.now().hour
-
-        if utc_now <= user_now:
-            return (utc_now - user_now)
-
+            init_lat, init_long = self.run_df_reset.iloc[0]['latitude'], self.run_df_reset.iloc[0]['longitude']
+            map_points = [(self.run_df_reset['latitude'][i], self.run_df_reset['longitude'][i]) for i in range(len(self.run_df_reset))]
+            map1 = folium.Map(location=(init_lat, init_long), zoom_start=15)
+            folium.PolyLine(map_points).add_to(map1)
+            return map1
+        
         else:
-            return "Gastropods"
+            raise ValueError("Must choose 'elevation' or 'route'.")
