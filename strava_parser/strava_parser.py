@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import folium
 import matplotlib.pyplot as plt
-from datetime import datetime as dt
 from geopy.distance import geodesic
 
 
@@ -60,6 +59,7 @@ class StravaParser:
         
     def generate_plots(self, kind=None):
 
+
         """
         Generate plots of the run data.
         ...
@@ -69,17 +69,14 @@ class StravaParser:
             Choose between 'elevation' and 'route'.
         """
         
-        self.run_df_reset = self.run_df.reset_index(drop=True)
 
+        self.run_df_reset = self.run_df.reset_index(drop=True)
         title_string = f" for Run @ {self.run_df_reset['time'][0].strftime('%Y-%m-%d %H:%M')}"
         
+
         if kind == "elevation":
             fig = plt.figure(figsize=(10,2))
             plt.plot(self.run_df_reset['distance'], self.run_df_reset['elevation'])
-            
-            # Set xticks every 1% of max_distance
-            exp_step = len(self.run_df_reset) / len(str(int(self.run_df_reset['distance'].max())))
-
             max_distance = self.run_df_reset['distance'].max()
             step_size = max_distance * 0.1  # 1% of max_distance
             plt.xticks(np.arange(0, max_distance, step_size))  
@@ -89,13 +86,12 @@ class StravaParser:
     
 
         elif kind == "route":
-
             init_lat, init_long = self.run_df_reset.iloc[0]['latitude'], self.run_df_reset.iloc[0]['longitude']
             map_points = [(self.run_df_reset['latitude'][i], self.run_df_reset['longitude'][i]) for i in range(len(self.run_df_reset))]
-            map1 = folium.Map(location=(init_lat, init_long), zoom_start=15)
+            map1 = folium.Map(location=(init_lat, init_long), zoom_start=13)
             folium.PolyLine(map_points).add_to(map1)
             return map1
         
-        
+
         else:
             raise ValueError("Must choose 'elevation' or 'route'.")
