@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime as dt
 from geopy.distance import geodesic
 
+
 class StravaParser:
 
 
