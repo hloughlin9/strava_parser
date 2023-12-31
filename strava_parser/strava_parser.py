@@ -57,6 +57,7 @@ class StravaParser:
         self.run_df = self.run_df.drop(columns=['distance_from_previous'])
         self.run_df.index = self.run_df['distance'] // 1
         
+        
     def generate_plots(self, kind=None):
 
 
