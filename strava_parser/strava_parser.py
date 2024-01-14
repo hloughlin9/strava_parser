@@ -87,8 +87,8 @@ class StravaParser:
         
     
     def get_quarters(self):
-        self.run_df_reset['constant_'] = 1
-        self.run_df_reset['quarter_mile'] = self.run_df_reset['distance'] // 0.25
+        self.run_df['constant_'] = 1
+        self.run_df['quarter_mile'] = self.run_df['distance'] // 0.25
         self.run_df_quarters = self.run_df.groupby("quarter_mile")['constant_'].sum()
-        del self.run_df_reset['constant_']
+        del self.run_df['constant_']
         return self.run_df_quarters
