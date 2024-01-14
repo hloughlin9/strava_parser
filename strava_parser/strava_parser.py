@@ -84,3 +84,11 @@ class StravaParser:
         
         else:
             raise ValueError("Must choose 'elevation' or 'route'.")
+        
+    
+    def get_quarters(self):
+        self.run_df_reset['constant_'] = 1
+        self.run_df_reset['quarter_mile'] = self.run_df_reset['distance'] // 0.25
+        self.run_df_quarters = self.run_df.groupby("quarter_mile")['constant_'].sum()
+        del self.run_df_reset['constant']
+        return self.run_df_quarters
