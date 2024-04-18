@@ -4,6 +4,7 @@ import numpy as np
 import folium
 import matplotlib.pyplot as plt
 from geopy.distance import geodesic
+from datetime import timedelta as td
 
 
 class StravaParser:
