@@ -52,7 +52,7 @@ class StravaParser:
         self.run_df.index = self.run_df['distance'] // 1
         
 
-    def generate_plots(self, kind=None):
+    def generate_plots(self, plot_type=None):
 
         """
         Generate plots of the run data.
@@ -66,7 +66,7 @@ class StravaParser:
         self.run_df_reset = self.run_df.reset_index(drop=True)
         title_string = f" for Run @ {self.run_df_reset['time'][0].strftime('%Y-%m-%d %H:%M')}"
         
-        if kind == "elevation":
+        if plot_type == "elevation":
             fig = plt.figure(figsize=(10,2))
             plt.plot(self.run_df_reset['distance'], self.run_df_reset['elevation'])
             max_distance = self.run_df_reset['distance'].max()
@@ -76,7 +76,7 @@ class StravaParser:
             plt.title(f"Elevation {title_string}")
             return plt.show()
 
-        elif kind == "route":
+        elif plot_type == "route":
             init_lat, init_long = self.run_df_reset.iloc[0]['latitude'], self.run_df_reset.iloc[0]['longitude']
             map_points = [(self.run_df_reset['latitude'][i], self.run_df_reset['longitude'][i]) for i in range(len(self.run_df_reset))]
             map1 = folium.Map(location=(init_lat, init_long), zoom_start=13)
