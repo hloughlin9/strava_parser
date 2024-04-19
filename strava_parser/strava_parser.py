@@ -59,7 +59,7 @@ class StravaParser:
         ...
         Attributes:
         -----------
-        kind: str (optional)
+        plot_type: str (optional)
             Choose between 'elevation' and 'route'.
         """
 
